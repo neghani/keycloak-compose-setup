@@ -1,0 +1,38 @@
+version: "3"
+volumes:
+  mysql_data:
+    driver: local
+services:
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: keycloak
+      MYSQL_USER: keycloak
+      MYSQL_PASSWORD: password
+  keycloak:
+    build:
+      context: .
+      target: builder
+    image: ${DOCKER_REG}${SERVICE_NAME}
+    env_file: .env
+    environment:
+      DB_VENDOR: MYSQL
+      DB_ADDR: mysql
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: Pa55w0rd
+      KEYCLOAK_IMPORT: /opt/jboss/keycloak/imports/realm-export.json -Dkeycloak.profile.feature.upload_scripts=enabled
+    volumes:
+      - ./themes/cyboinsect-theme/:/opt/jboss/keycloak/themes/cyboinsect-theme/
+      - ./themes/adminlte/:/opt/jboss/keycloak/themes/adminlte/
+      - ./themes/material/:/opt/jboss/keycloak/themes/material/
+      - ./imports:/opt/jboss/keycloak/imports
+    ports:
+      - 8080:8080
+    depends_on:
+      - mysql
